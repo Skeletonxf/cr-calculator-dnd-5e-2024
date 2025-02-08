@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.skeletonxf.engine.ChallengeRating
+import io.github.skeletonxf.ui.BudgetPlot
 import io.github.skeletonxf.ui.MonsterBudgetRow
 
 import io.github.skeletonxf.ui.PlayerBudgetRow
@@ -206,6 +207,14 @@ fun Content(
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(12.dp))
+            BudgetPlot(
+                low = 0,
+                moderate = 0,
+                high = 0,
+                monsters = state.monsters,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }

@@ -1,6 +1,8 @@
 package io.github.skeletonxf.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,22 +20,30 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import io.github.skeletonxf.engine.ChallengeRating
+import io.github.skeletonxf.ui.state.Monsters
 import io.github.skeletonxf.ui.state.PlayerBudgetData
 import io.github.skeletonxf.ui.state.Players
+import kotlin.math.max
 
 @Composable
 fun NumberPicker(
@@ -220,6 +230,125 @@ fun XPBudget(
                     textAlign = TextAlign.Center
                 )
                 Text(text = state.highBudget.toString(), textAlign = TextAlign.Center)
+            }
+        }
+    }
+}
+
+@Composable
+fun BudgetPlot(
+    low: Int,
+    moderate: Int,
+    high: Int,
+    monsters: Monsters,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme.let { colors ->
+        listOf(
+            colors.primary,
+            colors.secondary,
+            colors.tertiary,
+            colors.outline,
+            colors.outlineVariant,
+        )
+    }
+    val alphas = listOf(
+        1.0F,
+        0.9F,
+        0.8F,
+        0.7F,
+        0.6F,
+    )
+    Layout(
+        content = {
+            monsters.descending.forEachIndexed { index, monsters ->
+                repeat(monsters.quantity) { i ->
+                    Surface(
+                        color = colors[index % colors.size].copy(alpha = alphas[i % 2]),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text(
+                                text = monsters.challengeRating.number,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                            Text(
+                                text = "${monsters.challengeRating.xp()} XP",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                }
+            }
+            // TODO: Need 3 lines for low, moderate and high XP budgets, and fourth for
+            // where the total XP spent ends up
+        },
+        modifier = modifier.sizeIn(minWidth = 400.dp, minHeight = 100.dp),
+    ) { measurables, constraints ->
+        val rowMarginPixels = 8.dp.toPx().toInt()
+        // FIXME: Need to split monsters into a grid, we may need to wrap some rows
+        // where the quantity is too high
+        // Items in grid should have a width based on their CR value, we're sorting so
+        // the highest CR monsters are at the bottom of the graph so the bottom row should
+        // always cover 100% of the available width, then higher rows should be smaller items
+        // because they're also smaller CRs
+        var monsterTypeIndex = 0
+        var quantity = 0
+        val totalWidthPixels = if (constraints.maxWidth != Constraints.Infinity) {
+            constraints.maxWidth
+        } else {
+            throw IllegalStateException("Not handling non max width constraints yet")
+        }
+        val placeables = mutableListOf<Placeable>()
+        var heightUsedPixels = 0
+        measurables.forEach { measurable ->
+            val monster = monsters.descending[monsterTypeIndex]
+            // Try to put all monsters of this CR on the same row
+            val rowFractionPixels = (totalWidthPixels / monster.quantity) -
+                    (rowMarginPixels * (monster.quantity - 1))
+            val placeable = measurable.measure(
+                // TODO: Deduct some margins between each monster on the same row
+                Constraints(
+                    minWidth = rowFractionPixels,
+                    maxWidth = rowFractionPixels,
+                    maxHeight = constraints.maxHeight,
+                )
+            )
+            quantity += 1
+            if (quantity == 1) {
+                heightUsedPixels += placeable.height
+            }
+            if (quantity >= monster.quantity) {
+                monsterTypeIndex += 1
+                quantity = 0
+            }
+            placeables.add(placeable)
+        }
+        val height = max(heightUsedPixels, constraints.minHeight)
+        layout(
+            width = totalWidthPixels,
+            height = height,
+        ) {
+            var row = 0
+            var column = 0
+            var heightClaimed = 0
+            placeables.forEach { placeable ->
+                val monster = monsters.descending[row]
+                placeable.placeRelative(
+                    x = (totalWidthPixels * (column / monster.quantity.toFloat())).toInt() + (rowMarginPixels * column),
+                    y = height - heightClaimed - placeable.height
+                )
+                column += 1
+                if (column >= monster.quantity) {
+                    row += 1
+                    column = 0
+                    heightClaimed += placeable.height
+                }
             }
         }
     }

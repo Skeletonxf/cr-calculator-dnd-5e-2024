@@ -6,6 +6,7 @@ data class Monsters(
     val list: List<MonsterData>,
 ) {
     val xp: Int = list.sumOf { row -> row.xp }
+    val descending = list.sortedByDescending { it.challengeRating.xp() }
 
     fun remove(index: Int): Monsters = copy(
         list = list.toMutableList().apply {
