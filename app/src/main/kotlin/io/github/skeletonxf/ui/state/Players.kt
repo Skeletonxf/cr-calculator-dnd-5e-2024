@@ -17,7 +17,7 @@ data class Players(
         }
     )
 
-    fun setQuantity(quantity: Int, index: Int) = copy(
+    fun setQuantity(quantity: Int, index: Int): Players = copy(
         list = list.toMutableList().apply {
             if (indexInRange(index)) {
                 set(index, list[index].copy(quantity = quantity))
@@ -25,7 +25,7 @@ data class Players(
         }
     )
 
-    fun setLevel(level: Int, index: Int) = copy(
+    fun setLevel(level: Int, index: Int): Players = copy(
         list = list.toMutableList().apply {
             if (indexInRange(index)) {
                 set(index, list[index].copy(level = level))

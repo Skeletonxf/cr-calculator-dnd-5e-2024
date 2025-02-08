@@ -30,12 +30,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.skeletonxf.engine.ChallengeRating
+import io.github.skeletonxf.ui.MonsterBudgetRow
 
 import io.github.skeletonxf.ui.PlayerBudgetRow
 import io.github.skeletonxf.ui.XPBudget
@@ -55,10 +57,14 @@ class MainActivity : ComponentActivity() {
                 val state by viewModel.state
                 Content(
                     state = state,
-                    onSetQuantity = viewModel::setQuantity,
-                    onSetLevel = viewModel::setLevel,
-                    onRemoveRow = viewModel::removeRow,
-                    onAddRow = viewModel::addRow,
+                    onSetPlayerQuantity = viewModel::setPlayerQuantity,
+                    onSetPlayerLevel = viewModel::setPlayerLevel,
+                    onRemovePlayerRow = viewModel::removePlayerRow,
+                    onAddPlayerRow = viewModel::addPlayerRow,
+                    onSetMonsterQuantity = viewModel::setMonsterQuantity,
+                    onSetMonsterChallengeRating = viewModel::setMonsterChallengeRating,
+                    onRemoveMonsterRow = viewModel::removeMonsterRow,
+                    onAddMonsterRow = viewModel::addMonsterRow,
                 )
             }
             SideEffect {
@@ -75,10 +81,14 @@ fun EmptyContent() {
     val state by viewModel.state
     Content(
         state = state,
-        onSetQuantity = viewModel::setQuantity,
-        onSetLevel = viewModel::setLevel,
-        onRemoveRow = viewModel::removeRow,
-        onAddRow = viewModel::addRow,
+        onSetPlayerQuantity = viewModel::setPlayerQuantity,
+        onSetPlayerLevel = viewModel::setPlayerLevel,
+        onRemovePlayerRow = viewModel::removePlayerRow,
+        onAddPlayerRow = viewModel::addPlayerRow,
+        onSetMonsterQuantity = viewModel::setMonsterQuantity,
+        onSetMonsterChallengeRating = viewModel::setMonsterChallengeRating,
+        onRemoveMonsterRow = viewModel::removeMonsterRow,
+        onAddMonsterRow = viewModel::addMonsterRow,
     )
 }
 
@@ -86,10 +96,14 @@ fun EmptyContent() {
 @Composable
 fun Content(
     state: MainActivityViewModel.State,
-    onSetQuantity: (Int, Row) -> Unit,
-    onSetLevel: (Int, Row) -> Unit,
-    onRemoveRow: (Row) -> Unit,
-    onAddRow: () -> Unit,
+    onSetPlayerQuantity: (Int, Row) -> Unit,
+    onSetPlayerLevel: (Int, Row) -> Unit,
+    onRemovePlayerRow: (Row) -> Unit,
+    onAddPlayerRow: () -> Unit,
+    onSetMonsterQuantity: (Int, Row) -> Unit,
+    onSetMonsterChallengeRating: (ChallengeRating, Row) -> Unit,
+    onRemoveMonsterRow: (Row) -> Unit,
+    onAddMonsterRow: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -104,7 +118,9 @@ fun Content(
         ) {
             Text(
                 text = "CR Calculator",
-                modifier = Modifier.padding(8.dp).semantics { heading() },
+                modifier = Modifier
+                    .padding(8.dp)
+                    .semantics { heading() },
                 style = MaterialTheme.typography.headlineMedium
             )
         }
@@ -112,24 +128,30 @@ fun Content(
             modifier = Modifier.verticalScroll(rememberScrollState()),
         ) {
             Spacer(modifier = Modifier.height(8.dp))
+            // TODO: Flow Row these two surfaces so they can go side by side on wide screens
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp),
                 shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                color = MaterialTheme.colorScheme.surfaceContainer,
             ) {
                 Column(
                     modifier = Modifier.padding(horizontal = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
+                    Text(
+                        text = "Players",
+                        modifier = Modifier.padding(8.dp),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
                     state.players.list.forEachIndexed { index, row ->
                         PlayerBudgetRow(
                             quantity = row.quantity,
-                            onQuantityChange = { onSetQuantity(it, index) },
+                            onQuantityChange = { onSetPlayerQuantity(it, index) },
                             level = row.level,
-                            onLevelChange = { onSetLevel(it, index) },
-                            onDelete = { onRemoveRow(index) }
+                            onLevelChange = { onSetPlayerLevel(it, index) },
+                            onDelete = { onRemovePlayerRow(index) }
                         )
                     }
                     FlowRow(
@@ -138,7 +160,7 @@ fun Content(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Button(
-                            onClick = onAddRow,
+                            onClick = onAddPlayerRow,
                             modifier = Modifier.padding(8.dp)
                         ) {
                             Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
@@ -146,6 +168,41 @@ fun Content(
                         XPBudget(
                             state = state.players,
                         )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                ) {
+                    Text(
+                        text = "Monsters",
+                        modifier = Modifier.padding(8.dp),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    state.monsters.list.forEachIndexed { index, row ->
+                        MonsterBudgetRow(
+                            quantity = row.quantity,
+                            onQuantityChange = { onSetMonsterQuantity(it, index) },
+                            challengeRating = row.challengeRating,
+                            onChallengeRatingChange = { onSetMonsterChallengeRating(it, index) },
+                            onDelete = { onRemoveMonsterRow(index) }
+                        )
+                    }
+                    Button(
+                        onClick = onAddMonsterRow,
+                        modifier = Modifier
+                            .padding(8.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
                     }
                 }
             }
