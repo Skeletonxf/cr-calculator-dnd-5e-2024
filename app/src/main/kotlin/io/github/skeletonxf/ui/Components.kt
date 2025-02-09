@@ -1,12 +1,9 @@
 package io.github.skeletonxf.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
@@ -25,7 +22,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -40,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import io.github.skeletonxf.engine.ChallengeRating
+import io.github.skeletonxf.ui.state.MonsterData
 import io.github.skeletonxf.ui.state.Monsters
 import io.github.skeletonxf.ui.state.PlayerBudgetData
 import io.github.skeletonxf.ui.state.Players
@@ -247,7 +244,6 @@ fun BudgetPlot(
         listOf(
             colors.primary,
             colors.secondary,
-            colors.tertiary,
             colors.outline,
             colors.outlineVariant,
         )
@@ -264,7 +260,7 @@ fun BudgetPlot(
             monsters.descending.forEachIndexed { index, monsters ->
                 repeat(monsters.quantity) { i ->
                     Surface(
-                        color = colors[index % colors.size].copy(alpha = alphas[i % 2]),
+                        color = colors[index % colors.size].copy(alpha = alphas[i % 5]),
                     ) {
                         Column(
                             modifier = Modifier
@@ -290,15 +286,12 @@ fun BudgetPlot(
         },
         modifier = modifier.sizeIn(minWidth = 400.dp, minHeight = 100.dp),
     ) { measurables, constraints ->
+        val maxPerRow = 4
+        // TODO: Pick a max based on our width available to support landscape and big screens
         val rowMarginPixels = 8.dp.toPx().toInt()
-        // FIXME: Need to split monsters into a grid, we may need to wrap some rows
-        // where the quantity is too high
-        // Items in grid should have a width based on their CR value, we're sorting so
-        // the highest CR monsters are at the bottom of the graph so the bottom row should
-        // always cover 100% of the available width, then higher rows should be smaller items
-        // because they're also smaller CRs
-        var monsterTypeIndex = 0
-        var quantity = 0
+        val grid = monsters.descendingAsGrid(maxPerRow = maxPerRow)
+        var gridRowIndex = 0
+        var gridColumn = 0
         val totalWidthPixels = if (constraints.maxWidth != Constraints.Infinity) {
             constraints.maxWidth
         } else {
@@ -306,28 +299,33 @@ fun BudgetPlot(
         }
         val placeables = mutableListOf<Placeable>()
         var heightUsedPixels = 0
+        val marginTotalPixels = max(0, maxPerRow - 1) * rowMarginPixels
         measurables.forEach { measurable ->
-            val monster = monsters.descending[monsterTypeIndex]
-            // Try to put all monsters of this CR on the same row
-            val rowFractionPixels = (totalWidthPixels / monster.quantity) -
-                    (rowMarginPixels * (monster.quantity - 1))
-            val placeable = measurable.measure(
-                // TODO: Deduct some margins between each monster on the same row
-                Constraints(
-                    minWidth = rowFractionPixels,
-                    maxWidth = rowFractionPixels,
-                    maxHeight = constraints.maxHeight,
+            if (gridRowIndex <= grid.lastIndex) {
+                val gridRow = grid.get(gridRowIndex)
+                val monster = gridRow[gridColumn]
+                // Subtract total margin even if a particular row doesn't need all of it
+                // as this keeps all blocks for a given CR the same size and better aligns
+                // everything
+                val rowFractionPixels = (totalWidthPixels * monster.width).toInt() -
+                        marginTotalPixels
+                val placeable = measurable.measure(
+                    Constraints(
+                        minWidth = rowFractionPixels,
+                        maxWidth = rowFractionPixels,
+                        maxHeight = constraints.maxHeight,
+                    )
                 )
-            )
-            quantity += 1
-            if (quantity == 1) {
-                heightUsedPixels += placeable.height
+                gridColumn += 1
+                if (gridColumn > gridRow.lastIndex) {
+                    gridColumn = 0
+                    gridRowIndex += 1
+                    heightUsedPixels += placeable.height
+                }
+                placeables.add(placeable)
+            } else {
+                // Handle non monster composable items here
             }
-            if (quantity >= monster.quantity) {
-                monsterTypeIndex += 1
-                quantity = 0
-            }
-            placeables.add(placeable)
         }
         val height = max(heightUsedPixels, constraints.minHeight)
         layout(
@@ -337,17 +335,28 @@ fun BudgetPlot(
             var row = 0
             var column = 0
             var heightClaimed = 0
+            var widthClaimed = 0
             placeables.forEach { placeable ->
-                val monster = monsters.descending[row]
-                placeable.placeRelative(
-                    x = (totalWidthPixels * (column / monster.quantity.toFloat())).toInt() + (rowMarginPixels * column),
-                    y = height - heightClaimed - placeable.height
-                )
-                column += 1
-                if (column >= monster.quantity) {
-                    row += 1
-                    column = 0
-                    heightClaimed += placeable.height
+                if (row <= grid.lastIndex) {
+                    val gridRow = grid.get(row)
+                    // We want to center items within a row, so add half the unused width of the row
+                    // as a starting position
+                    val unused = ((1.0 - gridRow.sumOf { it.width.toDouble() }) * totalWidthPixels) -
+                            ((gridRow.size - 1) * rowMarginPixels)
+                    // FIXME: reserving space for unused parts of the row isn't horizontally
+                    // centering rows where final items are a shorter width due to a lower CR
+                    placeable.placeRelative(
+                        x = (unused/2).toInt() + widthClaimed,
+                        y = height - heightClaimed - placeable.height
+                    )
+                    column += 1
+                    widthClaimed += placeable.width + rowMarginPixels
+                    if (column > gridRow.lastIndex) {
+                        row += 1
+                        column = 0
+                        heightClaimed += placeable.height
+                        widthClaimed = 0
+                    }
                 }
             }
         }
@@ -378,4 +387,22 @@ fun MonsterBudgetRowPreview() = MonsterBudgetRow(
 @Preview
 fun XPBudgetPreview() = XPBudget(
     state = Players(list = listOf(PlayerBudgetData(level = 5, quantity = 4)))
+)
+
+@Composable
+@Preview
+fun BudgetPlotPreview() = BudgetPlot(
+    low = 0,
+    moderate = 0,
+    high = 0,
+    monsters = Monsters(
+        listOf(
+            MonsterData(quantity = 1, challengeRating = ChallengeRating.Four),
+            MonsterData(quantity = 1, challengeRating = ChallengeRating.Three),
+            MonsterData(quantity = 1, challengeRating = ChallengeRating.Two),
+            MonsterData(quantity = 3, challengeRating = ChallengeRating.One),
+            MonsterData(quantity = 5, challengeRating = ChallengeRating.Half),
+            MonsterData(quantity = 1, challengeRating = ChallengeRating.Quarter),
+        )
+    )
 )
