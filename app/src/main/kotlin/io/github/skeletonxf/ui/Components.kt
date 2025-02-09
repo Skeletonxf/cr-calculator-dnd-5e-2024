@@ -1,9 +1,11 @@
 package io.github.skeletonxf.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
@@ -280,56 +282,147 @@ fun BudgetPlot(
                         }
                     }
                 }
+                // TODO: Need 1 synthetic monster for unspent XP budget, this way the graph
+                // will always show how much XP can still be spent to reach High more obviously
+                // and distinguish meeting High from undershooting it
             }
-            // TODO: Need 3 lines for low, moderate and high XP budgets, and fourth for
-            // where the total XP spent ends up
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    Text(
+                        text = "Low\n$low XP",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    Text(
+                        text = "Moderate\n$moderate XP",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    Text(
+                        text = "High\n$high XP",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
         },
         modifier = modifier.sizeIn(minWidth = 400.dp, minHeight = 100.dp),
     ) { measurables, constraints ->
         val maxPerRow = 4
+        val budgetLinesPixels = 100.dp.toPx().toInt()
         // TODO: Pick a max based on our width available to support landscape and big screens
         val rowMarginPixels = 8.dp.toPx().toInt()
-        val grid = monsters.descendingAsGrid(maxPerRow = maxPerRow)
+        val grid = monsters.descendingAsGrid(
+            lowBudget = low,
+            moderateBudget = moderate,
+            highBudget = high,
+            maxPerRow = maxPerRow
+        )
         var gridRowIndex = 0
         var gridColumn = 0
         val totalWidthPixels = if (constraints.maxWidth != Constraints.Infinity) {
-            constraints.maxWidth
+            constraints.maxWidth - budgetLinesPixels
         } else {
             throw IllegalStateException("Not handling non max width constraints yet")
         }
+        if (totalWidthPixels <= 0) {
+            throw IllegalStateException("Need more width available")
+        }
         val placeables = mutableListOf<Placeable>()
         var heightUsedPixels = 0
+        val rowHeightsPixels = mutableListOf<Int>()
         val marginTotalPixels = max(0, maxPerRow - 1) * rowMarginPixels
-        measurables.forEach { measurable ->
-            if (gridRowIndex <= grid.lastIndex) {
-                val gridRow = grid.get(gridRowIndex)
-                val monster = gridRow[gridColumn]
-                // Subtract total margin even if a particular row doesn't need all of it
-                // as this keeps all blocks for a given CR the same size and better aligns
-                // everything
-                val rowFractionPixels = (totalWidthPixels * monster.width).toInt() -
-                        marginTotalPixels
-                val placeable = measurable.measure(
-                    Constraints(
-                        minWidth = rowFractionPixels,
-                        maxWidth = rowFractionPixels,
-                        maxHeight = constraints.maxHeight,
-                    )
-                )
-                gridColumn += 1
-                if (gridColumn > gridRow.lastIndex) {
-                    gridColumn = 0
-                    gridRowIndex += 1
-                    heightUsedPixels += placeable.height
-                }
-                placeables.add(placeable)
-            } else {
-                // Handle non monster composable items here
+        measurables.dropLast(3).forEach { measurable ->
+            if (gridRowIndex > grid.lastIndex) {
+                throw IllegalStateException("Bad indexing into grid with grid items")
             }
+            val gridRow = grid.get(gridRowIndex)
+            val monster = gridRow[gridColumn]
+            // Subtract total margin even if a particular row doesn't need all of it
+            // as this keeps all blocks for a given CR the same size and better aligns
+            // everything
+            val rowFractionPixels = (totalWidthPixels * monster.width).toInt() -
+                    marginTotalPixels
+            val placeable = measurable.measure(
+                Constraints(
+                    minWidth = rowFractionPixels,
+                    maxWidth = rowFractionPixels,
+                    maxHeight = constraints.maxHeight,
+                )
+            )
+            gridColumn += 1
+            if (gridColumn > gridRow.lastIndex) {
+                gridColumn = 0
+                gridRowIndex += 1
+                // FIXME: This should be the max height of any item in the row
+                heightUsedPixels += placeable.height
+                rowHeightsPixels.add(placeable.height)
+            }
+            placeables.add(placeable)
         }
+        val budgets = measurables.takeLast(3)
+        val lowBudgetHeight = rowHeightsPixels.take(grid.lowBudget.row).sum() +
+                (rowHeightsPixels[grid.lowBudget.row] * grid.lowBudget.fraction).toInt()
+        val lowBudget = budgets[0].measure(
+            Constraints(
+                minWidth = budgetLinesPixels,
+                maxWidth = budgetLinesPixels,
+                minHeight = lowBudgetHeight,
+                maxHeight = lowBudgetHeight
+            )
+        )
+        val moderateBudgetHeight = rowHeightsPixels.take(grid.moderateBudget.row).sum() +
+                (rowHeightsPixels[grid.moderateBudget.row] * grid.moderateBudget.fraction).toInt()
+        val moderateBudget = budgets[1].measure(
+            Constraints(
+                minWidth = budgetLinesPixels,
+                maxWidth = budgetLinesPixels,
+                minHeight = moderateBudgetHeight,
+                maxHeight = moderateBudgetHeight
+            )
+        )
+        val highBudgetHeight = rowHeightsPixels.take(grid.highBudget.row).sum() +
+                (rowHeightsPixels[grid.highBudget.row] * grid.highBudget.fraction).toInt()
+        val highBudget = budgets[2].measure(
+            Constraints(
+                minWidth = budgetLinesPixels,
+                maxWidth = budgetLinesPixels,
+                minHeight = highBudgetHeight,
+                maxHeight = highBudgetHeight
+            )
+        )
         val height = max(heightUsedPixels, constraints.minHeight)
         layout(
-            width = totalWidthPixels,
+            width = totalWidthPixels + budgetLinesPixels,
             height = height,
         ) {
             var row = 0
@@ -341,12 +434,14 @@ fun BudgetPlot(
                     val gridRow = grid.get(row)
                     // We want to center items within a row, so add half the unused width of the row
                     // as a starting position
-                    val unused = ((1.0 - gridRow.sumOf { it.width.toDouble() }) * totalWidthPixels) -
-                            ((gridRow.size - 1) * rowMarginPixels)
+                    val usedFraction = gridRow.sumOf { it.width.toDouble() }
+                    val usedContent = usedFraction * (totalWidthPixels - marginTotalPixels)
+                    val usedMargins = (gridRow.size - 1) * rowMarginPixels
+                    val unused = totalWidthPixels - usedMargins - usedContent
                     // FIXME: reserving space for unused parts of the row isn't horizontally
                     // centering rows where final items are a shorter width due to a lower CR
                     placeable.placeRelative(
-                        x = (unused/2).toInt() + widthClaimed,
+                        x = (unused / 2).toInt() + widthClaimed,
                         y = height - heightClaimed - placeable.height
                     )
                     column += 1
@@ -359,6 +454,9 @@ fun BudgetPlot(
                     }
                 }
             }
+            highBudget.placeRelative(x =  totalWidthPixels, y = height - highBudget.height)
+            moderateBudget.placeRelative(x = totalWidthPixels, y = height - moderateBudget.height)
+            lowBudget.placeRelative(x = totalWidthPixels, y = height - lowBudget.height)
         }
     }
 }
@@ -390,11 +488,11 @@ fun XPBudgetPreview() = XPBudget(
 )
 
 @Composable
-@Preview
+@Preview(widthDp = 500)
 fun BudgetPlotPreview() = BudgetPlot(
-    low = 0,
-    moderate = 0,
-    high = 0,
+    low = 2000,
+    moderate = 3000,
+    high = 4400,
     monsters = Monsters(
         listOf(
             MonsterData(quantity = 1, challengeRating = ChallengeRating.Four),
@@ -404,5 +502,5 @@ fun BudgetPlotPreview() = BudgetPlot(
             MonsterData(quantity = 5, challengeRating = ChallengeRating.Half),
             MonsterData(quantity = 1, challengeRating = ChallengeRating.Quarter),
         )
-    )
+    ),
 )

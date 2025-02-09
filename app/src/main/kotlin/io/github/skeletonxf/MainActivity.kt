@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -79,6 +80,34 @@ class MainActivity : ComponentActivity() {
 @Preview
 fun EmptyContent() {
     val viewModel = remember { MainActivityViewModel() }
+    val state by viewModel.state
+    Content(
+        state = state,
+        onSetPlayerQuantity = viewModel::setPlayerQuantity,
+        onSetPlayerLevel = viewModel::setPlayerLevel,
+        onRemovePlayerRow = viewModel::removePlayerRow,
+        onAddPlayerRow = viewModel::addPlayerRow,
+        onSetMonsterQuantity = viewModel::setMonsterQuantity,
+        onSetMonsterChallengeRating = viewModel::setMonsterChallengeRating,
+        onRemoveMonsterRow = viewModel::removeMonsterRow,
+        onAddMonsterRow = viewModel::addMonsterRow,
+    )
+}
+
+@Composable
+@Preview
+fun FilledContent() {
+    val viewModel = remember {
+        val viewModel = MainActivityViewModel()
+        viewModel.setPlayerLevel(3, 0)
+        viewModel.setPlayerQuantity(4, 0)
+        viewModel.setMonsterQuantity(2, 0)
+        viewModel.addMonsterRow()
+        viewModel.setMonsterQuantity(3, 1)
+        viewModel.setMonsterChallengeRating(ChallengeRating.Two, 0)
+        viewModel.setMonsterChallengeRating(ChallengeRating.One, 1)
+        viewModel
+    }
     val state by viewModel.state
     Content(
         state = state,
@@ -157,12 +186,12 @@ fun Content(
                     }
                     FlowRow(
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalArrangement = Arrangement.Top,
+                        verticalArrangement = Arrangement.Bottom,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Button(
                             onClick = onAddPlayerRow,
-                            modifier = Modifier.padding(8.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp)
                         ) {
                             Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
                         }
@@ -170,7 +199,9 @@ fun Content(
                             state = state.players,
                         )
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
+
             }
             Spacer(modifier = Modifier.height(12.dp))
             Surface(
@@ -198,20 +229,66 @@ fun Content(
                             onDelete = { onRemoveMonsterRow(index) }
                         )
                     }
-                    Button(
-                        onClick = onAddMonsterRow,
-                        modifier = Modifier
-                            .padding(8.dp)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalArrangement = Arrangement.Bottom,
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
+                        Button(
+                            onClick = onAddMonsterRow,
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            when {
+                                state.monsters.xp > state.players.highBudget -> {
+                                    Text(
+                                        text = "${state.monsters.xp} XP / ${state.players.highBudget} XP",
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(text = "TPK?", textAlign = TextAlign.Center)
+                                }
+
+                                state.monsters.xp > state.players.moderateBudget -> {
+                                    Text(
+                                        text = "${state.monsters.xp} XP / ${state.players.highBudget} XP",
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(text = "High", textAlign = TextAlign.Center)
+                                }
+
+                                state.monsters.xp > state.players.lowBudget -> {
+                                    Text(
+                                        text = "${state.monsters.xp} XP / ${state.players.moderateBudget} XP",
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(text = "Moderate", textAlign = TextAlign.Center)
+                                }
+
+                                state.monsters.xp > 0 -> {
+                                    Text(
+                                        text = "${state.monsters.xp} XP / ${state.players.lowBudget} XP",
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(text = "Low", textAlign = TextAlign.Center)
+                                }
+
+                                else -> Text(text = "0 XP")
+                            }
+                        }
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
             BudgetPlot(
-                low = 0,
-                moderate = 0,
-                high = 0,
+                low = state.players.lowBudget,
+                moderate = state.players.moderateBudget,
+                high = state.players.highBudget,
                 monsters = state.monsters,
                 modifier = Modifier.fillMaxWidth(),
             )

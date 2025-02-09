@@ -9,7 +9,12 @@ data class Monsters(
     val xp: Int = list.sumOf { row -> row.xp }
     val descending = list.sortedByDescending { it.challengeRating.xp() }
 
-    fun descendingAsGrid(maxPerRow: Int = 4) = MonsterGrid.from(this, maxPerRow)
+    fun descendingAsGrid(
+        lowBudget: Int,
+        moderateBudget: Int,
+        highBudget: Int,
+        maxPerRow: Int = 4
+    ) = MonsterGrid.from(this, lowBudget, moderateBudget, highBudget, maxPerRow)
 
     fun remove(index: Int): Monsters = copy(
         list = list.toMutableList().apply {
@@ -45,8 +50,13 @@ data class MonsterData(
     val xp: Int = quantity * challengeRating.xp()
 }
 
+data class BudgetThreshold(val row: Int, val fraction: Float)
+
 data class MonsterGrid(
     private val data: List<List<MonsterGridItem>>,
+    val lowBudget: BudgetThreshold,
+    val moderateBudget: BudgetThreshold,
+    val highBudget: BudgetThreshold,
 ) {
     data class MonsterGridItem(
         val cr: ChallengeRating,
@@ -58,7 +68,13 @@ data class MonsterGrid(
     fun get(row: Int): List<MonsterGridItem> = data[row]
 
     companion object {
-        fun from(monsters: Monsters, maxPerRow: Int = 4): MonsterGrid {
+        fun from(
+            monsters: Monsters,
+            lowBudget: Int,
+            moderateBudget: Int,
+            highBudget: Int,
+            maxPerRow: Int = 4
+        ): MonsterGrid {
             val descending = monsters.descending
             val crs = descending.map { it.challengeRating }.toSet().sortedDescending()
             // Create equally decreasing fractions from 100% down to 1/x where x is number of different
@@ -91,7 +107,58 @@ data class MonsterGrid(
                     grid.lastOrNull()?.add(item) ?: grid.add(mutableListOf(item))
                 }
             }
-            return MonsterGrid(data = grid)
+            var row = 0
+            var column = 0
+            var lowBudgetThreshold: BudgetThreshold? = null
+            var moderateBudgetThreshold: BudgetThreshold? = null
+            var highBudgetThreshold: BudgetThreshold? = null
+            var xpSpent = 0
+            while (row <= grid.lastIndex) {
+                val gridRow = grid[row]
+                val monsterRowFraction = 1 / gridRow.size
+                val xp = gridRow[column].cr.xp()
+                xpSpent += xp
+                // A large XP monster might shoot past the XP budget threshold, in
+                // which case we want to assign a lower fraction to the threshold than
+                // the fraction the monster takes the XP spent to
+                val start = (column.toFloat()) / gridRow.size
+                if (lowBudgetThreshold == null && xpSpent >= lowBudget) {
+                    val xpOver = xpSpent - lowBudget
+                    val fractionalOvershoot = xpOver.toFloat() / xp.toFloat()
+                    lowBudgetThreshold = BudgetThreshold(
+                        row = row,
+                        fraction = start + (monsterRowFraction * (1 - fractionalOvershoot))
+                    )
+                }
+                if (moderateBudgetThreshold == null && xpSpent >= moderateBudget) {
+                    val xpOver = xpSpent - moderateBudget
+                    val fractionalOvershoot = xpOver.toFloat() / xp.toFloat()
+                    moderateBudgetThreshold = BudgetThreshold(
+                        row = row,
+                        fraction = start + (monsterRowFraction * (1 - fractionalOvershoot))
+                    )
+                }
+                if (highBudgetThreshold == null && xpSpent >= highBudget) {
+                    val xpOver = xpSpent - highBudget
+                    val fractionalOvershoot = xpOver.toFloat() / xp.toFloat()
+                    highBudgetThreshold = BudgetThreshold(
+                        row = row,
+                        fraction = start + (monsterRowFraction * (1 - fractionalOvershoot))
+                    )
+                }
+                column += 1
+                if (column > gridRow.lastIndex) {
+                    row += 1
+                    column = 0
+                }
+            }
+            val thresholdBeyondXPSpent = BudgetThreshold(row = grid.lastIndex, fraction = 1.0F)
+            return MonsterGrid(
+                data = grid,
+                lowBudget = lowBudgetThreshold ?: thresholdBeyondXPSpent,
+                moderateBudget = moderateBudgetThreshold ?: thresholdBeyondXPSpent,
+                highBudget = highBudgetThreshold ?: thresholdBeyondXPSpent,
+            )
         }
     }
 }
