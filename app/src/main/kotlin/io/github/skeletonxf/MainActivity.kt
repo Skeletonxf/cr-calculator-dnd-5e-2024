@@ -244,40 +244,44 @@ fun Content(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            when {
-                                state.monsters.xp > state.players.highBudget -> {
-                                    Text(
-                                        text = "${state.monsters.xp} XP / ${state.players.highBudget} XP",
-                                        textAlign = TextAlign.Center
-                                    )
-                                    Text(text = "TPK?", textAlign = TextAlign.Center)
-                                }
+                            if (state.players.list.isNotEmpty()) {
+                                when {
+                                    state.monsters.xp > state.players.highBudget -> {
+                                        Text(
+                                            text = "${state.monsters.xp} XP / ${state.players.highBudget} XP",
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Text(text = "TPK?", textAlign = TextAlign.Center)
+                                    }
 
-                                state.monsters.xp > state.players.moderateBudget -> {
-                                    Text(
-                                        text = "${state.monsters.xp} XP / ${state.players.highBudget} XP",
-                                        textAlign = TextAlign.Center
-                                    )
-                                    Text(text = "High", textAlign = TextAlign.Center)
-                                }
+                                    state.monsters.xp > state.players.moderateBudget -> {
+                                        Text(
+                                            text = "${state.monsters.xp} XP / ${state.players.highBudget} XP",
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Text(text = "High", textAlign = TextAlign.Center)
+                                    }
 
-                                state.monsters.xp > state.players.lowBudget -> {
-                                    Text(
-                                        text = "${state.monsters.xp} XP / ${state.players.moderateBudget} XP",
-                                        textAlign = TextAlign.Center
-                                    )
-                                    Text(text = "Moderate", textAlign = TextAlign.Center)
-                                }
+                                    state.monsters.xp > state.players.lowBudget -> {
+                                        Text(
+                                            text = "${state.monsters.xp} XP / ${state.players.moderateBudget} XP",
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Text(text = "Moderate", textAlign = TextAlign.Center)
+                                    }
 
-                                state.monsters.xp > 0 -> {
-                                    Text(
-                                        text = "${state.monsters.xp} XP / ${state.players.lowBudget} XP",
-                                        textAlign = TextAlign.Center
-                                    )
-                                    Text(text = "Low", textAlign = TextAlign.Center)
-                                }
+                                    state.monsters.xp > 0 -> {
+                                        Text(
+                                            text = "${state.monsters.xp} XP / ${state.players.lowBudget} XP",
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Text(text = "Low", textAlign = TextAlign.Center)
+                                    }
 
-                                else -> Text(text = "0 XP")
+                                    else -> Text(text = "0 XP")
+                                }
+                            } else {
+                                Text(text = "${state.monsters.xp} XP")
                             }
                         }
                     }
@@ -285,13 +289,15 @@ fun Content(
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
-            BudgetPlot(
-                low = state.players.lowBudget,
-                moderate = state.players.moderateBudget,
-                high = state.players.highBudget,
-                monsters = state.monsters,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            if (state.players.lowBudget > 0 || state.monsters.list.isNotEmpty()) {
+                BudgetPlot(
+                    low = state.players.lowBudget,
+                    moderate = state.players.moderateBudget,
+                    high = state.players.highBudget,
+                    monsters = state.monsters,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

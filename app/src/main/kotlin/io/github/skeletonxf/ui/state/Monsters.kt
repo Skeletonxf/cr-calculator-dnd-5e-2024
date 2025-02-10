@@ -1,6 +1,7 @@
 package io.github.skeletonxf.ui.state
 
 import io.github.skeletonxf.engine.ChallengeRating
+import kotlin.math.max
 import kotlin.math.pow
 
 data class Monsters(
@@ -50,7 +51,7 @@ data class MonsterData(
     val xp: Int = quantity * challengeRating.xp()
 }
 
-data class BudgetThreshold(val row: Int, val fraction: Float)
+data class BudgetThreshold(val row: Int, val fraction: Float, val xp: Int)
 
 data class MonsterGrid(
     private val data: List<List<MonsterGridItem>>,
@@ -92,7 +93,7 @@ data class MonsterGrid(
                 .flatten()
             // Assign each monster in turn to the grid
             var widthUsed = 0.0F
-            val grid = mutableListOf<MutableList<MonsterGridItem>>(mutableListOf())
+            val grid = mutableListOf<MutableList<MonsterGridItem>>()
             for (monster in individualMonsters) {
                 val widthNeeded = widthMap[monster]!!
                 val item = MonsterGridItem(cr = monster, width = widthNeeded)
@@ -113,9 +114,9 @@ data class MonsterGrid(
             var moderateBudgetThreshold: BudgetThreshold? = null
             var highBudgetThreshold: BudgetThreshold? = null
             var xpSpent = 0
-            while (row <= grid.lastIndex) {
+            while (individualMonsters.isNotEmpty() && row <= grid.lastIndex) {
                 val gridRow = grid[row]
-                val monsterRowFraction = 1 / gridRow.size
+                val monsterRowFraction = 1.0F / gridRow.size
                 val xp = gridRow[column].cr.xp()
                 xpSpent += xp
                 // A large XP monster might shoot past the XP budget threshold, in
@@ -127,7 +128,8 @@ data class MonsterGrid(
                     val fractionalOvershoot = xpOver.toFloat() / xp.toFloat()
                     lowBudgetThreshold = BudgetThreshold(
                         row = row,
-                        fraction = start + (monsterRowFraction * (1 - fractionalOvershoot))
+                        fraction = start + (monsterRowFraction * (1.0F - fractionalOvershoot)),
+                        xp = lowBudget,
                     )
                 }
                 if (moderateBudgetThreshold == null && xpSpent >= moderateBudget) {
@@ -135,7 +137,8 @@ data class MonsterGrid(
                     val fractionalOvershoot = xpOver.toFloat() / xp.toFloat()
                     moderateBudgetThreshold = BudgetThreshold(
                         row = row,
-                        fraction = start + (monsterRowFraction * (1 - fractionalOvershoot))
+                        fraction = start + (monsterRowFraction * (1.0F - fractionalOvershoot)),
+                        xp = moderateBudget,
                     )
                 }
                 if (highBudgetThreshold == null && xpSpent >= highBudget) {
@@ -143,7 +146,8 @@ data class MonsterGrid(
                     val fractionalOvershoot = xpOver.toFloat() / xp.toFloat()
                     highBudgetThreshold = BudgetThreshold(
                         row = row,
-                        fraction = start + (monsterRowFraction * (1 - fractionalOvershoot))
+                        fraction = start + (monsterRowFraction * (1.0F - fractionalOvershoot)),
+                        xp = highBudget,
                     )
                 }
                 column += 1
@@ -152,13 +156,62 @@ data class MonsterGrid(
                     column = 0
                 }
             }
-            val thresholdBeyondXPSpent = BudgetThreshold(row = grid.lastIndex, fraction = 1.0F)
-            return MonsterGrid(
-                data = grid,
-                lowBudget = lowBudgetThreshold ?: thresholdBeyondXPSpent,
-                moderateBudget = moderateBudgetThreshold ?: thresholdBeyondXPSpent,
-                highBudget = highBudgetThreshold ?: thresholdBeyondXPSpent,
+            // If we've not spent an xp budget then its row is 1 beyond our data for monsters
+            val thresholdBeyondXPSpent = BudgetThreshold(
+                row = grid.lastIndex + 1, fraction = 1.0F, xp = 0
             )
+            if (highBudgetThreshold != null && moderateBudgetThreshold != null && lowBudgetThreshold != null) {
+                return MonsterGrid(
+                    data = grid,
+                    lowBudget = lowBudgetThreshold,
+                    moderateBudget = moderateBudgetThreshold,
+                    highBudget = highBudgetThreshold,
+                )
+            } else if (lowBudgetThreshold != null && moderateBudgetThreshold != null) {
+                // If only high budget hasn't been met, the fraction is 1.0 as its the only
+                // item in the row beyond our monster data.
+                return MonsterGrid(
+                    data = grid,
+                    lowBudget = lowBudgetThreshold,
+                    moderateBudget = moderateBudgetThreshold,
+                    highBudget = thresholdBeyondXPSpent.copy(xp = highBudget),
+                )
+            } else if (lowBudgetThreshold != null) {
+                // If moderate hasn't been met, then neither has high, so both are items in
+                // the row beyond our monster data and the fraction for moderate won't be 1.0
+                val unspentModerate = (moderateBudget - xpSpent).toFloat()
+                val moderateToHigh = highBudget - moderateBudget
+                val total = unspentModerate + moderateToHigh
+                return MonsterGrid(
+                    data = grid,
+                    lowBudget = lowBudgetThreshold,
+                    moderateBudget = thresholdBeyondXPSpent.copy(
+                        fraction = unspentModerate / total,
+                        xp = moderateBudget
+                    ),
+                    highBudget = thresholdBeyondXPSpent.copy(xp = highBudget),
+                )
+            } else {
+                // If low hasn't been met then neither have moderate or high, so all three are
+                // items in the row beyond our monster data and the fractions for low and
+                // moderate won't be 1.0
+                val unspentLow = (lowBudget - xpSpent).toFloat()
+                val lowToModerate = moderateBudget - lowBudget
+                val moderateToHigh = highBudget - moderateBudget
+                val total = unspentLow + lowToModerate + moderateToHigh
+                return MonsterGrid(
+                    data = grid,
+                    lowBudget = thresholdBeyondXPSpent.copy(
+                        fraction = unspentLow / total,
+                        xp = moderateBudget
+                    ),
+                    moderateBudget = thresholdBeyondXPSpent.copy(
+                        fraction = (unspentLow + moderateToHigh) / total,
+                        xp = moderateBudget
+                    ),
+                    highBudget = thresholdBeyondXPSpent.copy(xp = highBudget),
+                )
+            }
         }
     }
 }
