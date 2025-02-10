@@ -246,8 +246,8 @@ private fun MonsterBlock(
 ) {
     Column(
         modifier = Modifier
-            .padding(8.dp)
-            .sizeIn(minHeight = 48.dp),
+            .padding(2.dp)
+            .sizeIn(minHeight = 56.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -259,7 +259,7 @@ private fun MonsterBlock(
         Text(
             text = "${challengeRating.xp()} XP",
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
         )
     }
 }
@@ -274,8 +274,8 @@ private fun UnspentBlock(
 ) {
     Column(
         modifier = Modifier
-            .padding(vertical = 8.dp, horizontal = 2.dp)
-            .sizeIn(minHeight = 48.dp),
+            .padding(2.dp)
+            .sizeIn(minHeight = 56.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -299,7 +299,7 @@ private fun UnspentBlock(
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
         )
     }
 }
