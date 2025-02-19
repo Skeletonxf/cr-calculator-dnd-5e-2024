@@ -5,10 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,12 +15,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,19 +23,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.skeletonxf.engine.ChallengeRating
 import io.github.skeletonxf.ui.BudgetPlot
-import io.github.skeletonxf.ui.MonsterBudgetRow
-
-import io.github.skeletonxf.ui.PlayerBudgetRow
-import io.github.skeletonxf.ui.XPBudget
+import io.github.skeletonxf.ui.MonstersCard
+import io.github.skeletonxf.ui.PlayersCard
+import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.theme.CRCalculatorTheme
 
 typealias Row = Int
@@ -69,8 +59,9 @@ class MainActivity : ComponentActivity() {
                     onAddMonsterRow = viewModel::addMonsterRow,
                 )
             }
+            val strings = LocalStrings.current.calculator
             SideEffect {
-                window.setTitle("CR Calculator")
+                window.setTitle(strings.title)
             }
         }
     }
@@ -135,6 +126,7 @@ fun Content(
     onRemoveMonsterRow: (Row) -> Unit,
     onAddMonsterRow: () -> Unit,
 ) {
+    val strings = LocalStrings.current.calculator
     Column(
         modifier = Modifier
             .background(color = MaterialTheme.colorScheme.background)
@@ -147,7 +139,7 @@ fun Content(
             color = MaterialTheme.colorScheme.primary,
         ) {
             Text(
-                text = "CR Calculator",
+                text = strings.title,
                 modifier = Modifier
                     .padding(8.dp)
                     .semantics { heading() },
@@ -159,135 +151,28 @@ fun Content(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
             // TODO: Flow Row these two surfaces so they can go side by side on wide screens
-            Surface(
+            PlayersCard(
+                players = state.players,
+                onSetPlayerQuantity = onSetPlayerQuantity,
+                onSetPlayerLevel = onSetPlayerLevel,
+                onRemovePlayerRow = onRemovePlayerRow,
+                onAddPlayerRow = onAddPlayerRow,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.surfaceContainer,
-            ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                ) {
-                    Text(
-                        text = "Players",
-                        modifier = Modifier.padding(8.dp),
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    state.players.list.forEachIndexed { index, row ->
-                        PlayerBudgetRow(
-                            quantity = row.quantity,
-                            onQuantityChange = { onSetPlayerQuantity(it, index) },
-                            level = row.level,
-                            onLevelChange = { onSetPlayerLevel(it, index) },
-                            onDelete = { onRemovePlayerRow(index) }
-                        )
-                    }
-                    FlowRow(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalArrangement = Arrangement.Bottom,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Button(
-                            onClick = onAddPlayerRow,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
-                        }
-                        XPBudget(
-                            state = state.players,
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-            }
+                    .padding(horizontal = 8.dp)
+            )
             Spacer(modifier = Modifier.height(12.dp))
-            Surface(
+            MonstersCard(
+                players = state.players,
+                monsters = state.monsters,
+                onSetMonsterQuantity = onSetMonsterQuantity,
+                onSetMonsterChallengeRating = onSetMonsterChallengeRating,
+                onRemoveMonsterRow = onRemoveMonsterRow,
+                onAddMonsterRow = onAddMonsterRow,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-            ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                ) {
-                    Text(
-                        text = "Monsters",
-                        modifier = Modifier.padding(8.dp),
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    state.monsters.list.forEachIndexed { index, row ->
-                        MonsterBudgetRow(
-                            quantity = row.quantity,
-                            onQuantityChange = { onSetMonsterQuantity(it, index) },
-                            challengeRating = row.challengeRating,
-                            onChallengeRatingChange = { onSetMonsterChallengeRating(it, index) },
-                            onDelete = { onRemoveMonsterRow(index) }
-                        )
-                    }
-                    FlowRow(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalArrangement = Arrangement.Bottom,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Button(
-                            onClick = onAddMonsterRow,
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
-                        }
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            if (state.players.list.isNotEmpty()) {
-                                when {
-                                    state.monsters.xp > state.players.highBudget -> {
-                                        Text(
-                                            text = "${state.monsters.xp} XP / ${state.players.highBudget} XP",
-                                            textAlign = TextAlign.Center
-                                        )
-                                        Text(text = "TPK?", textAlign = TextAlign.Center)
-                                    }
-
-                                    state.monsters.xp > state.players.moderateBudget -> {
-                                        Text(
-                                            text = "${state.monsters.xp} XP / ${state.players.highBudget} XP",
-                                            textAlign = TextAlign.Center
-                                        )
-                                        Text(text = "High", textAlign = TextAlign.Center)
-                                    }
-
-                                    state.monsters.xp > state.players.lowBudget -> {
-                                        Text(
-                                            text = "${state.monsters.xp} XP / ${state.players.moderateBudget} XP",
-                                            textAlign = TextAlign.Center
-                                        )
-                                        Text(text = "Moderate", textAlign = TextAlign.Center)
-                                    }
-
-                                    state.monsters.xp > 0 -> {
-                                        Text(
-                                            text = "${state.monsters.xp} XP / ${state.players.lowBudget} XP",
-                                            textAlign = TextAlign.Center
-                                        )
-                                        Text(text = "Low", textAlign = TextAlign.Center)
-                                    }
-
-                                    else -> Text(text = "0 XP")
-                                }
-                            } else {
-                                Text(text = "${state.monsters.xp} XP")
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
+                    .padding(horizontal = 8.dp)
+            )
             Spacer(modifier = Modifier.height(12.dp))
             if (state.players.lowBudget > 0 || state.monsters.list.isNotEmpty()) {
                 BudgetPlot(

@@ -3,14 +3,21 @@ package io.github.skeletonxf.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -39,12 +46,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import io.github.skeletonxf.MainActivityViewModel
+import io.github.skeletonxf.Row
 import io.github.skeletonxf.engine.Budget
 import io.github.skeletonxf.engine.ChallengeRating
 import io.github.skeletonxf.ui.state.MonsterData
 import io.github.skeletonxf.ui.state.Monsters
 import io.github.skeletonxf.ui.state.PlayerBudgetData
 import io.github.skeletonxf.ui.state.Players
+import io.github.skeletonxf.ui.strings.LocalStrings
 import kotlin.math.max
 
 @Composable
@@ -135,6 +145,7 @@ fun PlayerBudgetRow(
     onLevelChange: (Int) -> Unit,
     onDelete: () -> Unit,
 ) {
+    val strings = LocalStrings.current.calculatorComponents
     Row(
         modifier = Modifier
             .sizeIn(maxWidth = 400.dp)
@@ -144,21 +155,24 @@ fun PlayerBudgetRow(
         NumberPicker(
             value = quantity,
             onValueChange = onQuantityChange,
-            label = "Quantity",
+            label = strings.quantity,
             options = (1..12).toList(),
         )
         Spacer(modifier = Modifier.width(8.dp))
         NumberPicker(
             value = level,
             onValueChange = onLevelChange,
-            label = "Level",
+            label = strings.level,
             options = (1..20).toList()
         )
         Spacer(modifier = Modifier.width(8.dp))
         IconButton(
             onClick = onDelete,
         ) {
-            Icon(imageVector = Icons.Default.Delete, contentDescription = "Remove")
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = strings.removeContentDescription,
+            )
         }
     }
 }
@@ -171,6 +185,7 @@ fun MonsterBudgetRow(
     onChallengeRatingChange: (ChallengeRating) -> Unit,
     onDelete: () -> Unit,
 ) {
+    val strings = LocalStrings.current.calculatorComponents
     Row(
         modifier = Modifier
             .sizeIn(maxWidth = 400.dp)
@@ -180,14 +195,14 @@ fun MonsterBudgetRow(
         NumberPicker(
             value = quantity,
             onValueChange = onQuantityChange,
-            label = "Quantity",
+            label = strings.quantity,
             options = (1..30).toList(),
         )
         Spacer(modifier = Modifier.width(8.dp))
         ValuePicker(
             value = challengeRating,
             onValueChange = onChallengeRatingChange,
-            label = "CR",
+            label = strings.challengeRating,
             options = ChallengeRating.entries,
             formatter = { it.number },
         )
@@ -195,10 +210,13 @@ fun MonsterBudgetRow(
         IconButton(
             onClick = onDelete,
         ) {
-            Icon(imageVector = Icons.Default.Delete, contentDescription = "Remove")
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = strings.removeContentDescription,
+            )
         }
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = "${(challengeRating.xp() * quantity)} XP")
+        Text(text = strings.xpValue(challengeRating.xp() * quantity))
     }
 }
 
@@ -206,12 +224,13 @@ fun MonsterBudgetRow(
 fun XPBudget(
     state: Players,
 ) {
+    val strings = LocalStrings.current.calculatorComponents
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = "XP Budget", textAlign = TextAlign.Center)
+        Text(text = strings.xpBudget, textAlign = TextAlign.Center)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Low",
+                    text = strings.lowDifficulty,
                     modifier = Modifier.padding(horizontal = 8.dp),
                     textAlign = TextAlign.Center
                 )
@@ -219,7 +238,7 @@ fun XPBudget(
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Moderate",
+                    text = strings.moderateDifficulty,
                     modifier = Modifier.padding(horizontal = 8.dp),
                     textAlign = TextAlign.Center
                 )
@@ -227,7 +246,7 @@ fun XPBudget(
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "High",
+                    text = strings.highDifficulty,
                     modifier = Modifier.padding(horizontal = 8.dp),
                     textAlign = TextAlign.Center
                 )
@@ -244,6 +263,7 @@ private fun MonsterBlock(
 ) = Surface(
     color = color,
 ) {
+    val strings = LocalStrings.current.calculatorComponents
     Column(
         modifier = Modifier
             .padding(2.dp)
@@ -257,7 +277,7 @@ private fun MonsterBlock(
             style = MaterialTheme.typography.bodyLarge,
         )
         Text(
-            text = "${challengeRating.xp()} XP",
+            text = strings.xpValue(challengeRating.xp()),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodySmall,
         )
@@ -272,6 +292,7 @@ private fun UnspentBlock(
 ) = Surface(
     color = color,
 ) {
+    val strings = LocalStrings.current.calculatorComponents
     Column(
         modifier = Modifier
             .padding(2.dp)
@@ -279,23 +300,23 @@ private fun UnspentBlock(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "Unspent",
+            text = strings.unspent,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodySmall,
         )
         Text(
             text = when (type) {
-                Budget.Type.Low -> "Low"
-                Budget.Type.Moderate -> "Moderate"
-                Budget.Type.High -> "High"
+                Budget.Type.Low -> strings.lowDifficulty
+                Budget.Type.Moderate -> strings.moderateDifficulty
+                Budget.Type.High -> strings.highDifficulty
             },
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodySmall,
         )
         Text(
-            text = "$xp XP",
+            text = strings.xpValue(xp),
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -316,6 +337,7 @@ fun BudgetPlot(
     monsters: Monsters,
     modifier: Modifier = Modifier,
 ) {
+    val strings = LocalStrings.current.calculatorComponents
     val colors = MaterialTheme.colorScheme.let { colors ->
         listOf(
             colors.primary,
@@ -404,7 +426,7 @@ fun BudgetPlot(
                     contentAlignment = Alignment.TopCenter
                 ) {
                     Text(
-                        text = "Low\n$low XP",
+                        text = strings.twoLineLowXP(low),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -420,7 +442,7 @@ fun BudgetPlot(
                     contentAlignment = Alignment.TopCenter
                 ) {
                     Text(
-                        text = "Moderate\n$moderate XP",
+                        text = strings.twoLineModerateXP(moderate),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -436,7 +458,7 @@ fun BudgetPlot(
                     contentAlignment = Alignment.TopCenter
                 ) {
                     Text(
-                        text = "High\n$high XP",
+                        text = strings.twoLineHighXP(high),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -609,6 +631,186 @@ fun BudgetPlot(
             highBudget.placeRelative(x =  totalWidthPixels, y = height - highBudget.height)
             moderateBudget.placeRelative(x = totalWidthPixels, y = height - moderateBudget.height)
             lowBudget.placeRelative(x = totalWidthPixels, y = height - lowBudget.height)
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun PlayersCard(
+    players: Players,
+    onSetPlayerQuantity: (Int, Row) -> Unit,
+    onSetPlayerLevel: (Int, Row) -> Unit,
+    onRemovePlayerRow: (Row) -> Unit,
+    onAddPlayerRow: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val strings = LocalStrings.current.calculatorComponents
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 8.dp),
+        ) {
+            Text(
+                text = strings.players,
+                modifier = Modifier.padding(8.dp),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            players.list.forEachIndexed { index, row ->
+                PlayerBudgetRow(
+                    quantity = row.quantity,
+                    onQuantityChange = { onSetPlayerQuantity(it, index) },
+                    level = row.level,
+                    onLevelChange = { onSetPlayerLevel(it, index) },
+                    onDelete = { onRemovePlayerRow(index) }
+                )
+            }
+            FlowRow(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.Bottom,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Button(
+                    onClick = onAddPlayerRow,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = strings.addContentDescription
+                    )
+                }
+                XPBudget(
+                    state = players,
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun MonstersCard(
+    players: Players,
+    monsters: Monsters,
+    onSetMonsterQuantity: (Int, Row) -> Unit,
+    onSetMonsterChallengeRating: (ChallengeRating, Row) -> Unit,
+    onRemoveMonsterRow: (Row) -> Unit,
+    onAddMonsterRow: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val strings = LocalStrings.current.calculatorComponents
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 8.dp),
+        ) {
+            Text(
+                text = strings.monsters,
+                modifier = Modifier.padding(8.dp),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            monsters.list.forEachIndexed { index, row ->
+                MonsterBudgetRow(
+                    quantity = row.quantity,
+                    onQuantityChange = { onSetMonsterQuantity(it, index) },
+                    challengeRating = row.challengeRating,
+                    onChallengeRatingChange = { onSetMonsterChallengeRating(it, index) },
+                    onDelete = { onRemoveMonsterRow(index) }
+                )
+            }
+            FlowRow(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.Bottom,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Button(
+                    onClick = onAddMonsterRow,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = strings.addContentDescription,
+                    )
+                }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    if (players.list.isNotEmpty()) {
+                        when {
+                            monsters.xp > players.highBudget -> {
+                                Text(
+                                    text = strings.xpFraction(
+                                        monsters.xp,
+                                        players.highBudget
+                                    ),
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    text = strings.pastHighDifficulty,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+
+                            monsters.xp > players.moderateBudget -> {
+                                Text(
+                                    text = strings.xpFraction(
+                                        monsters.xp,
+                                        players.highBudget
+                                    ),
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    text = strings.highDifficulty,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+
+                            monsters.xp > players.lowBudget -> {
+                                Text(
+                                    text = strings.xpFraction(
+                                        monsters.xp,
+                                        players.moderateBudget
+                                    ),
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    text = strings.moderateDifficulty,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+
+                            monsters.xp > 0 -> {
+                                Text(
+                                    text = strings.xpFraction(
+                                        monsters.xp,
+                                        players.lowBudget
+                                    ),
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    text = strings.lowDifficulty,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+
+                            else -> Text(text = strings.noXP)
+                        }
+                    } else {
+                        Text(text = strings.xpValue(monsters.xp))
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
