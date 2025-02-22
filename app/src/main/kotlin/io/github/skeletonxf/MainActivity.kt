@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import io.github.skeletonxf.engine.ChallengeRating
 import io.github.skeletonxf.ui.BudgetPlot
 import io.github.skeletonxf.ui.MonstersCard
@@ -41,6 +42,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var viewModel: MainActivityViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         viewModel = MainActivityViewModel()
