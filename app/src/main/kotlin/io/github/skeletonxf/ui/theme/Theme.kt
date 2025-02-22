@@ -13,12 +13,6 @@ import androidx.compose.ui.platform.LocalContext
 import io.github.skeletonxf.ui.strings.English
 import io.github.skeletonxf.ui.strings.LocalStrings
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,
@@ -37,20 +31,10 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun CRCalculatorTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    darkTheme: Boolean = isSystemInDarkTheme(), // TODO
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme =  LightColorScheme
 
     CompositionLocalProvider(LocalStrings provides English.strings) {
         MaterialTheme(

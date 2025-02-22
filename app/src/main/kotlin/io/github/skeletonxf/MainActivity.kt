@@ -2,11 +2,11 @@ package io.github.skeletonxf
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,6 +24,8 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,7 +46,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         viewModel = MainActivityViewModel()
         setContent {
             CRCalculatorTheme {
@@ -60,10 +61,18 @@ class MainActivity : ComponentActivity() {
                     onRemoveMonsterRow = viewModel::removeMonsterRow,
                     onAddMonsterRow = viewModel::addMonsterRow,
                 )
-            }
-            val strings = LocalStrings.current.calculator
-            SideEffect {
-                window.setTitle(strings.title)
+                val strings = LocalStrings.current.calculator
+                val darkScrim = MaterialTheme.colorScheme.primary
+                SideEffect {
+                    window.setTitle(strings.title)
+                    enableEdgeToEdge(
+                        statusBarStyle = SystemBarStyle.dark(darkScrim.toArgb()),
+                        navigationBarStyle = SystemBarStyle.light(
+                            Color.Transparent.toArgb(),
+                            Color.Transparent.toArgb(),
+                        )
+                    )
+                }
             }
         }
     }
@@ -115,7 +124,6 @@ fun FilledContent() {
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Content(
     state: MainActivityViewModel.State,
