@@ -55,6 +55,7 @@ import io.github.skeletonxf.ui.state.Monsters
 import io.github.skeletonxf.ui.state.PlayerBudgetData
 import io.github.skeletonxf.ui.state.Players
 import io.github.skeletonxf.ui.strings.LocalStrings
+import io.github.skeletonxf.ui.theme.CRCalculatorTheme
 import kotlin.math.max
 
 @Composable
@@ -817,59 +818,69 @@ fun MonstersCard(
 
 @Composable
 @Preview
-fun PlayerBudgetRowPreview() = PlayerBudgetRow(
-    quantity = 6,
-    onQuantityChange = {},
-    level = 3,
-    onLevelChange = {},
-    onDelete = {},
-)
+fun PlayerBudgetRowPreview() = CRCalculatorTheme {
+    PlayerBudgetRow(
+        quantity = 6,
+        onQuantityChange = {},
+        level = 3,
+        onLevelChange = {},
+        onDelete = {},
+    )
+}
 
 @Composable
 @Preview
-fun MonsterBudgetRowPreview() = MonsterBudgetRow(
-    quantity = 2,
-    onQuantityChange = {},
-    challengeRating = ChallengeRating.Six,
-    onChallengeRatingChange = {},
-    onDelete = {},
-)
+fun MonsterBudgetRowPreview()= CRCalculatorTheme {
+    MonsterBudgetRow(
+        quantity = 2,
+        onQuantityChange = {},
+        challengeRating = ChallengeRating.Six,
+        onChallengeRatingChange = {},
+        onDelete = {},
+    )
+}
 
 @Composable
 @Preview
-fun XPBudgetPreview() = XPBudget(
-    state = Players(list = listOf(PlayerBudgetData(level = 5, quantity = 4)))
-)
+fun XPBudgetPreview() = CRCalculatorTheme {
+    XPBudget(
+        state = Players(list = listOf(PlayerBudgetData(level = 5, quantity = 4)))
+    )
+}
 
 @Composable
 @Preview(widthDp = 500)
-fun BudgetPlotPreview() = BudgetPlot(
-    low = 2000,
-    moderate = 3000,
-    high = 4400,
-    monsters = Monsters(
-        listOf(
-            MonsterData(quantity = 1, challengeRating = ChallengeRating.Four),
-            MonsterData(quantity = 1, challengeRating = ChallengeRating.Three),
-            MonsterData(quantity = 1, challengeRating = ChallengeRating.Two),
-            MonsterData(quantity = 3, challengeRating = ChallengeRating.One),
-            MonsterData(quantity = 5, challengeRating = ChallengeRating.Half),
-            MonsterData(quantity = 1, challengeRating = ChallengeRating.Quarter),
-        )
-    ),
-)
+fun BudgetPlotPreview() = CRCalculatorTheme {
+    BudgetPlot(
+        low = 2000,
+        moderate = 3000,
+        high = 4400,
+        monsters = Monsters(
+            listOf(
+                MonsterData(quantity = 1, challengeRating = ChallengeRating.Four),
+                MonsterData(quantity = 1, challengeRating = ChallengeRating.Three),
+                MonsterData(quantity = 1, challengeRating = ChallengeRating.Two),
+                MonsterData(quantity = 3, challengeRating = ChallengeRating.One),
+                MonsterData(quantity = 5, challengeRating = ChallengeRating.Half),
+                MonsterData(quantity = 1, challengeRating = ChallengeRating.Quarter),
+            )
+        ),
+    )
+}
 
 @Composable
 @Preview(widthDp = 400)
-fun BudgetPlot2Preview() = BudgetPlot(
-    low = 1000,
-    moderate = 1500,
-    high = 2000,
-    monsters = Monsters(
-        listOf(
-            MonsterData(quantity = 2, challengeRating = ChallengeRating.One),
-            MonsterData(quantity = 2, challengeRating = ChallengeRating.Two),
-            MonsterData(quantity = 1, challengeRating = ChallengeRating.Three),
-        )
-    ),
-)
+fun BudgetPlot2Preview() = CRCalculatorTheme {
+    BudgetPlot(
+        low = 1000,
+        moderate = 1500,
+        high = 2000,
+        monsters = Monsters(
+            listOf(
+                MonsterData(quantity = 2, challengeRating = ChallengeRating.One),
+                MonsterData(quantity = 2, challengeRating = ChallengeRating.Two),
+                MonsterData(quantity = 1, challengeRating = ChallengeRating.Three),
+            )
+        ),
+    )
+}

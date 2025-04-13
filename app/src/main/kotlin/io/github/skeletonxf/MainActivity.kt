@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 @Preview
-fun EmptyContent() {
+fun EmptyContent() = CRCalculatorTheme {
     val viewModel = remember { MainActivityViewModel() }
     val state by viewModel.state
     Content(
@@ -98,7 +98,7 @@ fun EmptyContent() {
 
 @Composable
 @Preview
-fun FilledContent() {
+fun FilledContent() = CRCalculatorTheme {
     val viewModel = remember {
         val viewModel = MainActivityViewModel()
         viewModel.setPlayerLevel(3, 0)
