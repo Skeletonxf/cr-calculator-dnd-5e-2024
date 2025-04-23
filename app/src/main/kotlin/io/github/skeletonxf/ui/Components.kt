@@ -260,9 +260,11 @@ fun XPBudget(
 @Composable
 private fun MonsterBlock(
     color: Color,
+    contentColor: Color,
     challengeRating: ChallengeRating,
 ) = Surface(
     color = color,
+    contentColor = contentColor,
 ) {
     val strings = LocalStrings.current.calculatorComponents
     Column(
@@ -343,8 +345,7 @@ fun BudgetPlot(
         listOf(
             colors.primary,
             colors.secondary,
-            colors.outline,
-            colors.outlineVariant,
+            colors.tertiary,
         )
     }
     val alphas = listOf(
@@ -370,6 +371,7 @@ fun BudgetPlot(
                 repeat(monsters.quantity) { i ->
                     MonsterBlock(
                         color = colors[index % colors.size].copy(alpha = alphas[i % 5]),
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
                         challengeRating = monsters.challengeRating,
                     )
                 }
@@ -708,7 +710,7 @@ fun MonstersCard(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 8.dp),
