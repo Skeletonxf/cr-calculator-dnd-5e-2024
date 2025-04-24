@@ -18,7 +18,8 @@ jobs:
         cache: gradle
     - name: Build with Gradle
       run: ./gradlew assembleRelease
-    - uses: r0adkll/sign-android-release@v1
+    # https://github.com/ilharp/sign-android-release
+    - uses: ilharp/sign-android-release@v1
       name: Sign APK
       # ID used to access action output
       id: sign_app
