@@ -2,7 +2,8 @@ name: Android CI
 
 on:
   push:
-    branches: [ "master" ]
+    tags:
+    - 'v*'
 
 jobs:
   build:
@@ -36,3 +37,7 @@ jobs:
         name: "app.apk"
         path: ${{steps.sign_app.outputs.signedFile}}
         retention-days: 90
+    - name: Create release
+      run: gh release create ${{ github.ref_name }} ${{steps.sign_app.outputs.signedFile}} --title "APK Release"
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
