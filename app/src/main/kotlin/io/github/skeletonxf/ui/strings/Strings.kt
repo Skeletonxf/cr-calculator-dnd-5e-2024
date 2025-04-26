@@ -7,6 +7,7 @@ val LocalStrings = staticCompositionLocalOf { English.strings }
 data class Strings(
     val calculator: Calculator,
     val calculatorComponents: CalculatorComponents,
+    val information: Information,
 )
 
 data class CalculatorComponents(
@@ -29,17 +30,29 @@ data class CalculatorComponents(
     val level: String,
     val addContentDescription: String,
     val removeContentDescription: String,
+    val backButton: String,
 )
 
 data class Calculator(
     val title: String,
+    val infoButton: String,
+)
+
+data class Information(
+    val title: String,
+    val appVersion: (version: String) -> String,
+    val homepage: (url: String) -> String,
+    val homepageButton: String,
 )
 
 object English {
     private val xpValue = { xp: Int -> "$xp XP" }
 
     val strings: Strings = Strings(
-        calculator = Calculator(title = "CR Calculator"),
+        calculator = Calculator(
+            title = "CR Calculator",
+            infoButton = "Info",
+        ),
         calculatorComponents = CalculatorComponents(
             players = "Players",
             monsters = "Monsters",
@@ -56,6 +69,13 @@ object English {
             level = "Level",
             addContentDescription = "Add",
             removeContentDescription = "Remove",
+            backButton = "Back",
+        ),
+        information = Information(
+            title = "Information",
+            appVersion = { version -> "App version $version" },
+            homepage = { url -> "Homepage: $url" },
+            homepageButton = "Open Homepage",
         )
     )
 }

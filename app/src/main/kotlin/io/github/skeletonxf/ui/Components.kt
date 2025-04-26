@@ -46,10 +46,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
-import io.github.skeletonxf.MainActivityViewModel
-import io.github.skeletonxf.Row
 import io.github.skeletonxf.engine.Budget
 import io.github.skeletonxf.engine.ChallengeRating
+import io.github.skeletonxf.ui.screens.Row
 import io.github.skeletonxf.ui.state.MonsterData
 import io.github.skeletonxf.ui.state.Monsters
 import io.github.skeletonxf.ui.state.PlayerBudgetData
