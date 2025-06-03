@@ -50,6 +50,7 @@ import io.github.skeletonxf.engine.Budget
 import io.github.skeletonxf.engine.ChallengeRating
 import io.github.skeletonxf.ui.screens.Row
 import io.github.skeletonxf.ui.state.MonsterData
+import io.github.skeletonxf.ui.state.MonsterGrid
 import io.github.skeletonxf.ui.state.Monsters
 import io.github.skeletonxf.ui.state.PlayerBudgetData
 import io.github.skeletonxf.ui.state.Players
@@ -585,43 +586,25 @@ fun BudgetPlot(
             var heightClaimed = 0
             var highestInRow = 0
             var widthClaimed = 0
-            // FIXME: Calculation to center rows is still a little off for some items
-            // Should just convert to iterating through each row at a time so we can
-            // literally count the pixels needed by each row ourselves
-            placeables.forEach { placeable ->
-                if (row <= grid.lastIndex) {
-                    val gridRow = grid.get(row)
+            val gridPlaceables = gridPlaceables(placeables, grid)
+            var n = 0
+            gridPlaceables.forEachIndexed { rowIndex, rowOfPlaceables ->
+                val totalWidth = rowOfPlaceables.sumOf { it.width }
+                val gridRow = grid.get(rowIndex)
+                for (placeable in rowOfPlaceables) {
                     // We want to center items within a row, so add half the unused width of the row
                     // as a starting position
-                    val usedFraction = gridRow.sumOf { it.width.toDouble() }
                     val usedMargins = (gridRow.size - 1) * rowMarginPixels
-                    val unused = totalWidthPixels - (usedFraction * (totalWidthPixels - usedMargins))
+                    val unused = totalWidthPixels - totalWidth - usedMargins
                     placeable.placeRelative(
-                        x = (unused / 2).toInt() + widthClaimed,
+                        x = (unused / 2) + widthClaimed,
                         y = height - heightClaimed - placeable.height
                     )
                     column += 1
                     widthClaimed += placeable.width + rowMarginPixels
                     highestInRow = max(highestInRow, placeable.height)
+                    n += 1
                     if (column > gridRow.lastIndex) {
-                        row += 1
-                        column = 0
-                        heightClaimed += highestInRow
-                        highestInRow = 0
-                        widthClaimed = 0
-                    }
-                } else {
-                    val usedFraction = unspentBlockFraction * unspentBlocks
-                    val usedMargins = (unspentBlocks - 1) * rowMarginPixels
-                    val unused = totalWidthPixels - (usedFraction * (totalWidthPixels - usedMargins))
-                    placeable.placeRelative(
-                        x = (unused / 2).toInt() + widthClaimed,
-                        y = height - heightClaimed - placeable.height
-                    )
-                    column += 1
-                    widthClaimed += placeable.width + rowMarginPixels
-                    highestInRow = max(highestInRow, placeable.height)
-                    if (column > unspentBlocks - 1) {
                         row += 1
                         column = 0
                         heightClaimed += highestInRow
@@ -630,11 +613,47 @@ fun BudgetPlot(
                     }
                 }
             }
+            val unspentPlaceables = placeables.drop(n)
+            unspentPlaceables.forEach { placeable ->
+                val totalWidth = unspentPlaceables.sumOf { it.width }
+                val usedMargins = (unspentBlocks - 1) * rowMarginPixels
+                val unused = totalWidthPixels - totalWidth - usedMargins
+                placeable.placeRelative(
+                    x = (unused / 2) + widthClaimed,
+                    y = height - heightClaimed - placeable.height
+                )
+                column += 1
+                widthClaimed += placeable.width + rowMarginPixels
+                highestInRow = max(highestInRow, placeable.height)
+                if (column > unspentBlocks - 1) {
+                    row += 1
+                    column = 0
+                    heightClaimed += highestInRow
+                    highestInRow = 0
+                    widthClaimed = 0
+                }
+            }
             highBudget.placeRelative(x =  totalWidthPixels, y = height - highBudget.height)
             moderateBudget.placeRelative(x = totalWidthPixels, y = height - moderateBudget.height)
             lowBudget.placeRelative(x = totalWidthPixels, y = height - lowBudget.height)
         }
     }
+}
+
+private fun gridPlaceables(placeables: List<Placeable>, grid: MonsterGrid): List<List<Placeable>> {
+    var n = 0
+    val rows = mutableListOf<List<Placeable>>()
+    for (r in 0 until grid.rows) {
+        val items = grid.get(r).size
+        rows.add(
+            placeables.subList(
+                fromIndex = n,
+                toIndex = n + items
+            )
+        )
+        n += items
+    }
+    return rows
 }
 
 @OptIn(ExperimentalLayoutApi::class)
