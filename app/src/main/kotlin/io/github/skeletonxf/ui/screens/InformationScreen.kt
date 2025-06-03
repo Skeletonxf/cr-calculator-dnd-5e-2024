@@ -10,9 +10,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.skeletonxf.engine.Version
 import io.github.skeletonxf.ui.strings.LocalStrings
+import io.github.skeletonxf.ui.theme.CRCalculatorTheme
 
 private const val HOMEPAGE = "https://github.com/Skeletonxf/cr-calculator-dnd-5e-2024"
 
@@ -52,4 +54,10 @@ fun InformationScreen(
             }
         }
     }
+}
+
+@Composable
+@Preview
+fun InformationContent() = CRCalculatorTheme {
+    InformationScreen(onClose = {})
 }
