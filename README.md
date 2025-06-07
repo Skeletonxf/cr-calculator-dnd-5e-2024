@@ -8,4 +8,4 @@ To avoid needing an inevitably incomplete database of monsters, the challenge ra
 
 Screenshots:
 
-![App screenshot](screenshots/app.png?raw=true "App")
+![App screenshot](screenshots/app.jpg?raw=true "App")
