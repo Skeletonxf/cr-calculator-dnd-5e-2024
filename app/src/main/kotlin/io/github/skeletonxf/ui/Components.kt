@@ -113,7 +113,7 @@ fun <V : Any> ValuePicker(
             value = formatter(value),
             onValueChange = {},
             modifier = Modifier
-                .width(100.dp)
+                .width(110.dp)
                 .menuAnchor()
                 .padding(bottom = bottomPadding),
             readOnly = true,
@@ -187,37 +187,43 @@ fun MonsterBudgetRow(
     onDelete: () -> Unit,
 ) {
     val strings = LocalStrings.current.calculatorComponents
-    Row(
-        modifier = Modifier
-            .sizeIn(maxWidth = 400.dp)
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        NumberPicker(
-            value = quantity,
-            onValueChange = onQuantityChange,
-            label = strings.quantity,
-            options = (1..30).toList(),
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        ValuePicker(
-            value = challengeRating,
-            onValueChange = onChallengeRatingChange,
-            label = strings.challengeRating,
-            options = ChallengeRating.entries,
-            formatter = { it.number },
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        IconButton(
-            onClick = onDelete,
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Row(
+            modifier = Modifier
+                .sizeIn(maxWidth = 400.dp)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = strings.removeContentDescription,
+            NumberPicker(
+                value = quantity,
+                onValueChange = onQuantityChange,
+                label = strings.quantity,
+                options = (1..30).toList(),
             )
+            Spacer(modifier = Modifier.width(8.dp))
+            ValuePicker(
+                value = challengeRating,
+                onValueChange = onChallengeRatingChange,
+                label = strings.challengeRating,
+                options = ChallengeRating.entries,
+                formatter = { it.number },
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = onDelete,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = strings.removeContentDescription,
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
         }
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = strings.xpValue(challengeRating.xp() * quantity))
+        Text(
+            text = strings.xpMonsterStackValue(challengeRating.xp(), quantity),
+            modifier = Modifier.padding(horizontal = 8.dp),
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 

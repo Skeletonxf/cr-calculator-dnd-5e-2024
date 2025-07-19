@@ -19,6 +19,7 @@ data class CalculatorComponents(
     val pastHighDifficulty: String,
     val xpFraction: (xp: Int, budget: Int) -> String,
     val xpValue: (xp: Int) -> String,
+    val xpMonsterStackValue: (xpEach: Int, quantity: Int) -> String,
     val noXP: String = xpValue(0),
     val xpBudget: String,
     val twoLineLowXP: (xp: Int) -> String = { xp -> "$lowDifficulty\n${xpValue(xp)}" },
@@ -62,6 +63,13 @@ object English {
             pastHighDifficulty = "TPK?",
             xpFraction = { xp, budget -> "${xpValue(xp)} / ${xpValue(budget)}" },
             xpValue = xpValue,
+            xpMonsterStackValue = { xpEach, quantity ->
+                if (quantity > 1) {
+                    "${xpValue(xpEach * quantity)} (${xpValue(xpEach)} each)"
+                } else {
+                    xpValue(xpEach * quantity)
+                }
+            },
             xpBudget = "XP Budget",
             unspent = "Unspent",
             challengeRating = "CR",
