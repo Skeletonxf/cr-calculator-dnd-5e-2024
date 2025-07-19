@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.material3.MaterialTheme
@@ -24,12 +25,10 @@ import io.github.skeletonxf.ui.strings.LocalStrings
 import io.github.skeletonxf.ui.theme.CRCalculatorTheme
 
 class MainActivity : ComponentActivity() {
-    private lateinit var viewModel: MainActivityViewModel
-
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        viewModel = MainActivityViewModel()
+        val viewModel: MainActivityViewModel by viewModels()
         setContent {
             CRCalculatorTheme {
                 val navController = rememberNavController()
